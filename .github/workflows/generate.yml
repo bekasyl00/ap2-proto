@@ -25,7 +25,7 @@ jobs:
           path: code-repo
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: '1.21'
 
@@ -75,8 +75,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
           
-          # Only commit and push if there are changes
-          if ! git diff --staged --quiet; then
+          if [ -n "$(git status --porcelain)" ]; then
             git commit -m "Auto-generate proto code from ${GITHUB_SHA}"
             git push origin HEAD
           else
