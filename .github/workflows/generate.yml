@@ -1,0 +1,78 @@
+name: Generate Protocol Buffers and Push
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'proto/**/*.proto'
+
+jobs:
+  generate-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout proto repo
+        uses: actions/checkout@v3
+        with:
+          path: proto-repo
+
+      - name: Checkout code repo
+        uses: actions/checkout@v3
+        with:
+          repository: bekasyl00/ap2-genproto
+          token: ${{ secrets.PAT_TOKEN }}
+          path: code-repo
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Install protobuf
+        run: |
+          sudo apt-get update && sudo apt-get install -y protobuf-compiler
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
+
+      - name: Generate Code
+        run: |
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          
+          cd code-repo
+          if [ ! -f go.mod ]; then
+            go mod init github.com/bekasyl00/ap2-genproto
+          fi
+          go get google.golang.org/grpc
+          go get google.golang.org/protobuf
+          
+          cd ../proto-repo
+          mkdir -p ../code-repo/payment
+          mkdir -p ../code-repo/order
+          
+          # We need to change the go_package option in proto files to point to the new repo
+          find . -name "*.proto" -type f -exec sed -i 's|github.com/bekasyljaksylyk/ap2_microservices_project/contract/gen|github.com/bekasyl00/ap2-genproto|g' {} +
+          
+          protoc --go_out=../code-repo --go_opt=paths=source_relative \
+                 --go-grpc_out=../code-repo --go-grpc_opt=paths=source_relative \
+                 proto/payment.proto
+                 
+          protoc --go_out=../code-repo --go_opt=paths=source_relative \
+                 --go-grpc_out=../code-repo --go-grpc_opt=paths=source_relative \
+                 proto/order.proto
+
+      - name: Push generated code
+        run: |
+          cd code-repo
+          go mod tidy
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          
+          # Only commit and push if there are changes
+          if ! git diff --staged --empty; then
+            git commit -m "Auto-generate proto code from ${GITHUB_SHA}"
+            git push origin HEAD
+          else
+            echo "No changes to commit"
+          fi
