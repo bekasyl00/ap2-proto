@@ -53,13 +53,15 @@ jobs:
           # We need to change the go_package option in proto files to point to the new repo
           find . -name "*.proto" -type f -exec sed -i 's|github.com/bekasyljaksylyk/ap2_microservices_project/contract/gen|github.com/bekasyl00/ap2-genproto|g' {} +
           
-          protoc -I=proto --go_out=../code-repo --go_opt=module=github.com/bekasyl00/ap2-genproto \
-                 --go-grpc_out=../code-repo --go-grpc_opt=module=github.com/bekasyl00/ap2-genproto \
-                 proto/payment.proto
+          cd proto
+
+          protoc --go_out=../../code-repo/payment --go_opt=paths=source_relative \
+                 --go-grpc_out=../../code-repo/payment --go-grpc_opt=paths=source_relative \
+                 payment.proto
                  
-          protoc -I=proto --go_out=../code-repo --go_opt=module=github.com/bekasyl00/ap2-genproto \
-                 --go-grpc_out=../code-repo --go-grpc_opt=module=github.com/bekasyl00/ap2-genproto \
-                 proto/order.proto
+          protoc --go_out=../../code-repo/order --go_opt=paths=source_relative \
+                 --go-grpc_out=../../code-repo/order --go-grpc_opt=paths=source_relative \
+                 order.proto
 
       - name: Push generated code
         run: |
