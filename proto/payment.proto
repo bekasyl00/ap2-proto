@@ -8,6 +8,15 @@ import "google/protobuf/timestamp.proto";
 
 service PaymentService {
     rpc ProcessPayment(PaymentRequest) returns (PaymentResponse);
+    rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse);
+}
+
+message ListPaymentsRequest {
+    string status = 1; // "Authorized" or "Declined"
+}
+
+message ListPaymentsResponse {
+    repeated PaymentResponse payments = 1;
 }
 
 message PaymentRequest {
