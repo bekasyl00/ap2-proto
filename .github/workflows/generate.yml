@@ -7,6 +7,7 @@ on:
       - master
     paths:
       - 'proto/**/*.proto'
+      - '.github/workflows/**'
 
 jobs:
   generate-and-push:
