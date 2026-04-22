@@ -72,7 +72,7 @@ jobs:
           git add .
           
           # Only commit and push if there are changes
-          if ! git diff --staged --empty; then
+          if ! git diff --staged --quiet; then
             git commit -m "Auto-generate proto code from ${GITHUB_SHA}"
             git push origin HEAD
           else
